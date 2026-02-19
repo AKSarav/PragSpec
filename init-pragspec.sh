@@ -1,60 +1,74 @@
 #!/usr/bin/env bash
-# init-pragspec.sh — Scaffold a PragSpec /docs structure in any project
+# init-pragspec.sh — Scaffold a PragSpec directory structure in any project
 # Usage: ./init-pragspec.sh [project-name]
+#
+# Creates a pragspec/ directory — the single source of truth for what the
+# system is, how it is built, and why decisions were made.
 
 set -euo pipefail
 
 PROJECT="${1:-my-project}"
-DOCS="docs"
+ROOT="pragspec"
 
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
+BOLD='\033[1m'
 RESET='\033[0m'
 
-log()  { echo -e "${CYAN}  $1${RESET}"; }
-done_() { echo -e "${GREEN}✓ $1${RESET}"; }
+log()   { echo -e "  ${CYAN}created${RESET}  $1"; }
+skip()  { echo -e "  ${CYAN}skipped${RESET}  $1 (already exists)"; }
+done_() { echo -e "${GREEN}✓${RESET} $1"; }
 
 echo ""
-echo "  PragSpec — scaffolding docs for: $PROJECT"
-echo "  ─────────────────────────────────────────"
+echo -e "  ${BOLD}PragSpec${RESET} — scaffolding for: ${BOLD}$PROJECT${RESET}"
+echo "  ────────────────────────────────────────"
 echo ""
 
-# ── Directories ──────────────────────────────────────────────────────────────
+# ── Directories ───────────────────────────────────────────────────────────────
 
 for dir in \
-  "$DOCS/architecture" \
-  "$DOCS/features" \
-  "$DOCS/decisions" \
-  "$DOCS/standards"; do
+  "$ROOT/architecture" \
+  "$ROOT/features" \
+  "$ROOT/decisions" \
+  "$ROOT/standards"; do
   mkdir -p "$dir"
-  log "created $dir/"
+  log "$dir/"
 done
+echo ""
 
-# ── Helper: write file only if it doesn't already exist ──────────────────────
+# ── Helper: write only if the file doesn't already exist ─────────────────────
 
 write_if_new() {
   local path="$1"
   local content="$2"
   if [ -f "$path" ]; then
-    log "skipped  $path (already exists)"
+    skip "$path"
   else
-    echo "$content" > "$path"
-    done_ "created  $path"
+    printf '%s\n' "$content" > "$path"
+    log "$path"
   fi
 }
 
-# ── docs/README.md ────────────────────────────────────────────────────────────
+# ── pragspec/spec.md — Functional Spec + Index ────────────────────────────────
 
-write_if_new "$DOCS/README.md" "# $PROJECT — Spec Index
+write_if_new "$ROOT/spec.md" "# $PROJECT — Spec
 
-> **Agent entry point.** Read this file first, then architecture/overview.md,
+> **Agent entry point.** Read this file first, then \`architecture/overview.md\`,
 > then all enforced standards, then the target feature file.
 
-## Project
+## Purpose
 <!-- One sentence: what this system does and for whom -->
 
-## Tech Stack
-<!-- Language, framework, database, infra -->
+## Users
+<!-- Who uses this system and in what context -->
+
+## Core Capabilities
+<!-- Numbered list of what the system can do at a high level -->
+
+1.
+
+## Non-Functional Requirements
+<!-- Performance, availability, compliance, scale expectations -->
 
 ## Active Features
 
@@ -69,80 +83,69 @@ write_if_new "$DOCS/README.md" "# $PROJECT — Spec Index
 | standards/coding.md | all |
 | standards/error-model.md | api |
 
-## Architecture Files
-- [overview.md](architecture/overview.md)
-
-## Decisions
-- _(none yet)_
+## Architecture
+See [architecture/overview.md](architecture/overview.md) for the technical spec.
 "
 
-# ── docs/architecture/overview.md ────────────────────────────────────────────
+# ── pragspec/architecture/overview.md — Technical Spec ───────────────────────
 
-write_if_new "$DOCS/architecture/overview.md" "# Architecture Overview
-
-## Purpose
-<!-- What problem does this system solve? Who uses it? -->
-
-## System Context
-<!-- Where does this fit in the broader ecosystem? What does it depend on? -->
+write_if_new "$ROOT/architecture/overview.md" "# Technical Spec
 
 ## Tech Stack
+
 <!-- List language versions, frameworks, databases, infra -->
 
-## Key Design Choices
-<!-- 3-5 sentences on the most important architectural decisions.
-     If a decision needs explanation, write an ADR and reference it here. -->
+| Layer | Choice | Version |
+|---|---|---|
+| Language | | |
+| Framework | | |
+| Database | | |
+| Infrastructure | | |
+
+## System Design
+<!-- Key architectural patterns and how components fit together.
+     3-5 sentences maximum. If a decision needs explanation, write an ADR. -->
+
+## Integration Points
+<!-- External systems, APIs, or services this project depends on.
+     If none, write 'None at this stage.' -->
 
 ## Constraints
-<!-- Hard limits: performance SLAs, compliance requirements, platform limits -->
+<!-- Hard limits: performance SLAs, compliance requirements, platform limits,
+     scale targets, or anything an agent must treat as non-negotiable -->
 "
 
-# ── docs/architecture/principles.md ──────────────────────────────────────────
+# ── pragspec/standards/coding.md ─────────────────────────────────────────────
 
-write_if_new "$DOCS/architecture/principles.md" "# Engineering Principles
-
-<!-- List 4-6 principles this project commits to.
-     These inform tradeoffs when the spec is ambiguous. -->
-
-- **Simplicity first** — prefer the straightforward solution unless there is a
-  demonstrated need for complexity
-- **Explicit over implicit** — make contracts, errors, and side effects visible
-- **Standards enforced** — all standards/coding.md rules apply without exception
-- **ADRs for non-obvious choices** — if a future developer would ask \"why did
-  they do it this way?\", write an ADR
-"
-
-# ── docs/standards/coding.md ─────────────────────────────────────────────────
-
-write_if_new "$DOCS/standards/coding.md" "---
+write_if_new "$ROOT/standards/coding.md" "---
 enforced: true
 applies-to: [all]
 ---
 
 # Coding Standards
 
-<!-- Fill in language/framework-specific conventions.
-     These are hard constraints the agent must follow during code generation. -->
+<!-- Hard constraints the agent must follow during code generation.
+     Fill in for your language and framework. -->
 
 ## Language
-<!-- e.g. Python 3.11+, TypeScript 5.x -->
+<!-- e.g. Python 3.11+, TypeScript 5.x, Go 1.22 -->
 
 ## Style
-<!-- e.g. Black formatter, ESLint config, line length, naming conventions -->
+<!-- Formatter, linter, line length, naming conventions -->
 
 ## Structure
-<!-- e.g. module layout, file naming, layering rules -->
+<!-- Module layout, file naming, layering rules -->
 
 ## Testing
-<!-- e.g. pytest, coverage threshold, what must be tested -->
+<!-- Framework, coverage threshold, what must be tested -->
 
 ## Dependencies
-<!-- e.g. how to add dependencies, banned packages, version pinning policy -->
+<!-- How to add dependencies, banned packages, version pinning policy -->
 "
 
-# ── docs/standards/error-model.md ────────────────────────────────────────────
+# ── pragspec/standards/error-model.md ────────────────────────────────────────
 
-write_if_new "$DOCS/standards/error-model.md" "---
+write_if_new "$ROOT/standards/error-model.md" "---
 enforced: true
 applies-to: [api]
 ---
@@ -174,14 +177,14 @@ All API error responses must follow this structure. No exceptions.
 
 ## Rules
 - Never expose stack traces or internal paths in error responses
-- \`code\` must be a stable string identifier (used by clients for logic branching)
-- \`message\` is for humans, not machines
-- \`details\` is optional, used for field-level validation errors
+- \`code\` is a stable string identifier — clients branch logic on this, not on \`message\`
+- \`message\` is human-readable, not machine-parseable
+- \`details\` is optional; use it for field-level validation errors
 "
 
-# ── docs/standards/api-versioning.md ─────────────────────────────────────────
+# ── pragspec/standards/api-versioning.md ─────────────────────────────────────
 
-write_if_new "$DOCS/standards/api-versioning.md" "---
+write_if_new "$ROOT/standards/api-versioning.md" "---
 enforced: true
 applies-to: [api]
 ---
@@ -195,42 +198,52 @@ applies-to: [api]
 <!-- e.g. v1 -->
 
 ## Rules
+- Every route must include the version prefix explicitly — no implicit defaults
 - Breaking changes require a new version prefix
-- Deprecated endpoints must be supported for [N] release cycles
-- Version must be explicit in all route definitions — no implicit defaults
+- Deprecated endpoints must be supported for a minimum of two release cycles
 "
 
-# ── Feature template hint ─────────────────────────────────────────────────────
+# ── pragspec/features/.feature-template.md ───────────────────────────────────
 
-write_if_new "$DOCS/features/.feature-template.md" "---
+write_if_new "$ROOT/features/.feature-template.md" "---
 status: draft
 ---
 
 # Feature Name
 
-## Why
+## Functional
+
+### Why
 <!-- Problem statement and motivation. Why does this need to exist? -->
 
-## What
+### What
 <!-- Behavior, scope, and acceptance criteria.
-     Use a bullet list or numbered steps. Be specific enough that
-     an agent can implement it without asking clarifying questions. -->
+     Be specific enough that an agent can implement without asking questions. -->
 
-## Data Model
-<!-- Optional. Key entities, fields, and relationships.
+### Out of Scope
+<!-- Explicit exclusions. Prevents scope creep during implementation. -->
+
+## Technical
+
+### Data Model
+<!-- Key entities, fields, and relationships.
      Only include if the feature introduces or modifies persistent data. -->
 
-## Out of Scope
-<!-- Explicit exclusions. Prevents scope creep during implementation. -->
+### API Contract
+<!-- Endpoints, request/response shapes, status codes, error codes.
+     Reference standards/error-model.md for error shape. -->
+
+### Implementation Notes
+<!-- Constraints, patterns, or non-obvious choices the agent must follow. -->
 
 ## Open Questions
 <!-- Anything unresolved that would block a correct implementation.
-     Resolve these before setting status: ready -->
+     Resolve all of these before setting status: ready -->
 "
 
-# ── ADR template hint ─────────────────────────────────────────────────────────
+# ── pragspec/decisions/.adr-template.md ──────────────────────────────────────
 
-write_if_new "$DOCS/decisions/.adr-template.md" "# ADR-NNN: Title
+write_if_new "$ROOT/decisions/.adr-template.md" "# ADR-NNN: Title
 
 ## Status
 Draft | Accepted | Superseded by ADR-NNN | Deprecated
@@ -243,18 +256,18 @@ Draft | Accepted | Superseded by ADR-NNN | Deprecated
 
 ## Consequences
 <!-- What this enables. What it constrains or closes off.
-     What future teams need to know as a result. -->
+     What future teams or agents need to know as a result. -->
 "
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 
 echo ""
-echo -e "${GREEN}  PragSpec scaffolded in ./$DOCS/${RESET}"
+done_ "PragSpec scaffolded in ./$ROOT/"
 echo ""
 echo "  Next steps:"
-echo "  1. Fill in docs/README.md — project name, tech stack"
-echo "  2. Fill in docs/architecture/overview.md"
-echo "  3. Update docs/standards/coding.md for your language"
-echo "  4. Copy .feature-template.md → features/your-feature.md"
-echo "  5. Start building"
+echo "  1. Fill in pragspec/spec.md     — purpose, users, capabilities"
+echo "  2. Fill in architecture/overview.md — tech stack, system design"
+echo "  3. Update standards/coding.md   — conventions for your language"
+echo "  4. cp features/.feature-template.md features/your-feature.md"
+echo "  5. Build"
 echo ""
